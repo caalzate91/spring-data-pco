@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "CuentaBancaria")
+@SecondaryTable(name = "Usuarios")
 public class CuentaBancaria {
 
     @Id
