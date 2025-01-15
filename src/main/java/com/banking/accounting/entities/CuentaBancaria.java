@@ -1,14 +1,19 @@
 package com.banking.accounting.entities;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Entity
 @Table(name = "CuentaBancaria")
-@SecondaryTable(name = "Usuarios")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class CuentaBancaria {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idCuenta;
 
     @Column(nullable = false, unique = true)
@@ -21,6 +26,6 @@ public class CuentaBancaria {
     private String tipoCuenta;
 
     @ManyToOne
-    @JoinColumn(name = "idUsuario", table = "Usuarios")
+    @JoinColumn(name = "idUsuario")
     private Usuario usuario;
 }
