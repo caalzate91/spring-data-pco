@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+      tier: web
+  template:
+    metadata:
+      labels:
+        app: nginx
+        tier: web
+    spec:
+      # Aqui esta el Init para generar contenido persistente en el volumen
+      initContainers:
+        - name: init-web-content
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /usr/share/nginx/html && \
+              echo "<!doctype html><html><head><meta charset='utf-8'><title>Santiago Vélez Gutierrez</title></head><body><h1>Test del Reto</h1><p>Reto Tecnico L4: Networking and Storage</p></body></html>" > /usr/share/nginx/html/index.html
+          volumeMounts:
+            - name: web-content
+              mountPath: /usr/share/nginx/html
+      containers:
+        - name: nginx
+          image: nginx:1.25-alpine
+          ports:
+            - name: http
+              containerPort: 80
+          # Monta el contenido web y persiste también los logs
+          volumeMounts:
+            - name: web-content
+              mountPath: /usr/share/nginx/html
+            - name: nginx-logs
+              mountPath: /var/log/nginx
+          # Config para verificar salud del contenedor
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: web-content
+          persistentVolumeClaim:
+            claimName: nginx-pvc
+        - name: nginx-logs
+          persistentVolumeClaim:
+            claimName: nginx-pvc
