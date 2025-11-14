@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-data-pco
+  labels:
+    app: spring-data-pco
+    version: "v1.0.0"
+    environment: "production"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spring-data-pco
+  template:
+    metadata:
+      labels:
+        app: spring-data-pco
+    spec:
+      containers:
+        - name: spring-data-pco
+          image: ghcr.io/usuario/spring-data-pco:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: spring-data-pco-config
+            - secretRef:
+                name: spring-data-pco-secret
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1024Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+      terminationGracePeriodSeconds: 30
