@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+
+kind: Ingress
+metadata:
+  name: spring-data-pco-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/limit-connections: "20"
+    nginx.ingress.kubernetes.io/limit-rpm: "60"
+spec:
+  tls:
+    - hosts:
+        - spring-data-pco.local
+      secretName: spring-data-pco-tls
+  rules:
+    - host: spring-data-pco.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-data-pco
+                port:
+                  number: 80
