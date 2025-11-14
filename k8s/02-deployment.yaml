@@ -1,0 +1,413 @@
+---
+# Deployment para la aplicación Banking Accounting
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-accounting-deployment
+  labels:
+    app: banking-accounting
+    tier: frontend
+    version: v1
+spec:
+  # Número de réplicas para alta disponibilidad
+  replicas: 3
+  
+  # Estrategia de actualización rolling
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  
+  # Selector para asociar Pods con este Deployment
+  selector:
+    matchLabels:
+      app: banking-accounting
+      tier: frontend
+  
+  # Template del Pod
+  template:
+    metadata:
+      labels:
+        app: banking-accounting
+        tier: frontend
+        version: v1
+    spec:
+      # InitContainer para copiar contenido HTML inicial al volumen persistente
+      initContainers:
+      - name: init-html
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+          - |
+            # Solo copiar si el directorio está vacío
+            if [ ! -f /html/index.html ]; then
+              echo "Copiando contenido HTML inicial..."
+              cat > /html/index.html <<'EOF'
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Banking Accounting System</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body {
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        min-height: 100vh;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        padding: 20px;
+                    }
+                    .container {
+                        background: white;
+                        border-radius: 20px;
+                        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                        padding: 40px;
+                        max-width: 800px;
+                        width: 100%;
+                    }
+                    h1 { color: #667eea; font-size: 2.5em; margin-bottom: 10px; text-align: center; }
+                    .subtitle { color: #666; text-align: center; margin-bottom: 30px; font-size: 1.1em; }
+                    .info-box {
+                        background: #f8f9fa;
+                        border-left: 4px solid #667eea;
+                        padding: 20px;
+                        margin: 20px 0;
+                        border-radius: 5px;
+                    }
+                    .features {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 20px;
+                        margin: 30px 0;
+                    }
+                    .feature {
+                        background: #667eea;
+                        color: white;
+                        padding: 20px;
+                        border-radius: 10px;
+                        text-align: center;
+                    }
+                    .status {
+                        display: flex;
+                        justify-content: space-around;
+                        margin-top: 30px;
+                        padding-top: 30px;
+                        border-top: 2px solid #eee;
+                    }
+                    .status-item .value { color: #28a745; font-size: 1.5em; font-weight: bold; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>🏦 Banking Accounting System</h1>
+                    <p class="subtitle">Sistema con Almacenamiento Persistente</p>
+                    <div class="info-box">
+                        <h3>✅ Datos Persistentes Activos</h3>
+                        <p>Esta aplicación usa PersistentVolumes. Los logs y contenido sobreviven a reinicios de pods.</p>
+                    </div>
+                    <div class="features">
+                        <div class="feature"><h4>💾 Logs Persistentes</h4><p>/var/log/nginx</p></div>
+                        <div class="feature"><h4>📁 HTML Persistente</h4><p>/usr/share/nginx/html</p></div>
+                        <div class="feature"><h4>⚡ 3 Réplicas</h4><p>Alta Disponibilidad</p></div>
+                        <div class="feature"><h4>🌐 Ingress</h4><p>reto.local</p></div>
+                    </div>
+                    <div class="status">
+                        <div class="status-item"><div class="value">✓ PV Activo</div></div>
+                        <div class="status-item"><div class="value">✓ PVC Bound</div></div>
+                        <div class="status-item"><div class="value">✓ 1Gi Storage</div></div>
+                    </div>
+                </div>
+            </body>
+            </html>
+            EOF
+              echo "Contenido HTML copiado exitosamente"
+            else
+              echo "Contenido HTML ya existe, omitiendo inicialización"
+            fi
+        volumeMounts:
+        - name: html-content
+          mountPath: /html
+      
+      containers:
+      - name: nginx
+        # Imagen oficial de nginx
+        image: nginx:1.25-alpine
+        
+        # Puerto del contenedor
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        
+        # Recursos solicitados y límites
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        
+        # Liveness Probe - verifica si el contenedor está vivo
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        # Readiness Probe - verifica si el contenedor está listo para recibir tráfico
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+        
+        # Montaje de volúmenes
+        volumeMounts:
+        # Volumen persistente para contenido HTML
+        - name: html-content
+          mountPath: /usr/share/nginx/html
+        # Volumen persistente para logs
+        - name: nginx-logs
+          mountPath: /var/log/nginx
+        # ConfigMap para configuración de nginx
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d
+      
+      # Volúmenes
+      volumes:
+      # PersistentVolumeClaim para contenido HTML
+      - name: html-content
+        persistentVolumeClaim:
+          claimName: nginx-html-pvc
+      # PersistentVolumeClaim para logs
+      - name: nginx-logs
+        persistentVolumeClaim:
+          claimName: nginx-logs-pvc
+      # ConfigMap para configuración
+      - name: nginx-config
+        configMap:
+          name: nginx-config
+
+---
+# ConfigMap para contenido HTML personalizado
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: banking-html-content
+  labels:
+    app: banking-accounting
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Banking Accounting System</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 20px;
+            }
+            .container {
+                background: white;
+                border-radius: 20px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                padding: 40px;
+                max-width: 800px;
+                width: 100%;
+                animation: fadeIn 0.5s ease-in;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            h1 {
+                color: #667eea;
+                font-size: 2.5em;
+                margin-bottom: 10px;
+                text-align: center;
+            }
+            .subtitle {
+                color: #666;
+                text-align: center;
+                margin-bottom: 30px;
+                font-size: 1.1em;
+            }
+            .info-box {
+                background: #f8f9fa;
+                border-left: 4px solid #667eea;
+                padding: 20px;
+                margin: 20px 0;
+                border-radius: 5px;
+            }
+            .info-box h3 {
+                color: #333;
+                margin-bottom: 10px;
+            }
+            .info-box p {
+                color: #666;
+                line-height: 1.6;
+            }
+            .features {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+                margin: 30px 0;
+            }
+            .feature {
+                background: #667eea;
+                color: white;
+                padding: 20px;
+                border-radius: 10px;
+                text-align: center;
+                transition: transform 0.3s;
+            }
+            .feature:hover {
+                transform: translateY(-5px);
+            }
+            .feature h4 {
+                margin-bottom: 10px;
+                font-size: 1.2em;
+            }
+            .status {
+                display: flex;
+                justify-content: space-around;
+                margin-top: 30px;
+                padding-top: 30px;
+                border-top: 2px solid #eee;
+            }
+            .status-item {
+                text-align: center;
+            }
+            .status-item .label {
+                color: #999;
+                font-size: 0.9em;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+            .status-item .value {
+                color: #28a745;
+                font-size: 1.5em;
+                font-weight: bold;
+                margin-top: 5px;
+            }
+            .footer {
+                text-align: center;
+                margin-top: 30px;
+                color: #999;
+                font-size: 0.9em;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🏦 Banking Accounting System</h1>
+            <p class="subtitle">Sistema de Contabilidad Bancaria - Kubernetes Deployment</p>
+            
+            <div class="info-box">
+                <h3>✅ Aplicación Desplegada Exitosamente</h3>
+                <p>Esta aplicación está corriendo en un cluster de Kubernetes con almacenamiento persistente y comunicación segura.</p>
+            </div>
+            
+            <div class="features">
+                <div class="feature">
+                    <h4>🔒 Seguridad</h4>
+                    <p>JWT Authentication</p>
+                </div>
+                <div class="feature">
+                    <h4>💾 Persistencia</h4>
+                    <p>Datos Seguros</p>
+                </div>
+                <div class="feature">
+                    <h4>⚡ Alta Disponibilidad</h4>
+                    <p>3 Réplicas</p>
+                </div>
+                <div class="feature">
+                    <h4>🌐 Escalable</h4>
+                    <p>Auto-scaling</p>
+                </div>
+            </div>
+            
+            <div class="status">
+                <div class="status-item">
+                    <div class="label">Estado</div>
+                    <div class="value">✓ Activo</div>
+                </div>
+                <div class="status-item">
+                    <div class="label">Pods</div>
+                    <div class="value">3/3</div>
+                </div>
+                <div class="status-item">
+                    <div class="label">Uptime</div>
+                    <div class="value">100%</div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>Desarrollado por Juan David Delgado Jojoa | Kubernetes Workshop</p>
+                <p>Hostname: <span id="hostname">Loading...</span></p>
+            </div>
+        </div>
+        
+        <script>
+            // Mostrar información del pod
+            fetch('/api/hostname')
+                .catch(() => document.getElementById('hostname').textContent = window.location.hostname);
+        </script>
+    </body>
+    </html>
+
+---
+# ConfigMap para configuración de nginx
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  labels:
+    app: banking-accounting
+data:
+  default.conf: |
+    server {
+        listen 80;
+        server_name _;
+        
+        location / {
+            root /usr/share/nginx/html;
+            index index.html;
+            try_files $uri $uri/ =404;
+        }
+        
+        # Health check endpoint
+        location /health {
+            access_log off;
+            return 200 "healthy\n";
+            add_header Content-Type text/plain;
+        }
+        
+        # Logs
+        access_log /var/log/nginx/access.log;
+        error_log /var/log/nginx/error.log;
+    }

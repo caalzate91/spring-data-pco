@@ -1,0 +1,24 @@
+---
+# Ingress para exposición externa de la aplicación web
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: banking-accounting-ingress
+  labels:
+    app: banking-accounting
+spec:
+  # Clase del Ingress Controller
+  ingressClassName: nginx
+  
+  # Reglas de enrutamiento
+  rules:
+  - host: reto.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: banking-accounting-service
+            port:
+              number: 80
