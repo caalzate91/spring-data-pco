@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-l4-deployment
+  labels:
+    app: my-app-l4
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app-l4
+  template:
+    metadata:
+      labels:
+        app: my-app-l4
+    spec:
+      containers:
+      - name: my-app-l4-container
+        image: localhost/mi-registro/my-app-l4:v1
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        volumeMounts:
+        - name: my-app-l4-storage
+          mountPath: /var/share/nginx/html
+      env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: "dev"
+      livenessProbe:
+        tcpSocket:
+          port: 8080
+        initialDelaySeconds: 120
+        periodSeconds: 10
+        failureThreshold: 6
+      readinessProbe:
+        tcpSocket:
+          port: 8080
+        initialDelaySeconds: 60
+        periodSeconds: 5
+        failureThreshold: 10
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "400m"
+        requests:
+          memory: "64Mi"
+          cpu: "150m"
+      volumes:
+        - name: my-app-l4-storage
+          persistentVolumeClaim:
+            claimName: my-app-l4-pvc
