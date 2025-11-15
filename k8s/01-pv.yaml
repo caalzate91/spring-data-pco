@@ -1,0 +1,71 @@
+---
+# PersistentVolume para logs de nginx
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nginx-logs-pv
+  labels:
+    app: banking-accounting
+    type: logs
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: standard
+  hostPath:
+    path: /mnt/data/banking-logs
+    type: DirectoryOrCreate
+
+---
+# PersistentVolumeClaim para logs de nginx
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nginx-logs-pvc
+  labels:
+    app: banking-accounting
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+# PersistentVolume para contenido HTML
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nginx-html-pv
+  labels:
+    app: banking-accounting
+    type: html
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: standard
+  hostPath:
+    path: /mnt/data/banking-html
+    type: DirectoryOrCreate
+
+---
+# PersistentVolumeClaim para contenido HTML
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nginx-html-pvc
+  labels:
+    app: banking-accounting
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 1Gi

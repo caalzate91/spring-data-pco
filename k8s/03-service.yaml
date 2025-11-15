@@ -1,0 +1,30 @@
+---
+# Service ClusterIP para comunicación interna
+apiVersion: v1
+kind: Service
+metadata:
+  name: banking-accounting-service
+  labels:
+    app: banking-accounting
+    tier: frontend
+spec:
+  # Tipo ClusterIP para comunicación interna dentro del cluster
+  type: ClusterIP
+  
+  # Selector para encontrar los pods del Deployment
+  selector:
+    app: banking-accounting
+    tier: frontend
+  
+  # Puertos expuestos
+  ports:
+  - name: http
+    port: 80          # Puerto del Service (lo que otros pods usan)
+    targetPort: 80    # Puerto del contenedor (puerto de nginx)
+    protocol: TCP
+  
+  # Session affinity para mantener sesiones
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800  # 3 horas
