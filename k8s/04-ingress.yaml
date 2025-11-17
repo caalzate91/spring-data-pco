@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mi-app-java-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: localhost
+      http:
+        paths:
+          - path: /cuenta
+            pathType: Prefix
+            backend:
+              service:
+                name: cuenta-bancaria
+                port:
+                  number: 80
+          - path: /usuario
+            pathType: Prefix
+            backend:
+              service:
+                name: usuario
+                port:
+                  number: 80
+

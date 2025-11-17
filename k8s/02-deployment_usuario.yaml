@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: usuario-deploy
+  labels:
+    app: usuario
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: usuario
+  template:
+    metadata:
+      labels:
+        app: usuario
+    spec:
+      containers:
+        - name: usuario-container
+          image: localhost/mi-registro/mi-app-java:v1
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "production"
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:h2:file:/tmp/data/testdb;IFEXISTS=FALSE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
+          volumeMounts:
+            - name: app-data
+              mountPath: /tmp/data
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 5
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 10
+          resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+        limits:
+          memory: "1Gi"
+          cpu: "500m"
+      volumes:
+        - name: app-data
+          persistentVolumeClaim:
+            claimName: mi-app-java-pv  
