@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: biblioteca-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: reto.local
+    http:
+      paths:
+      - path: /catalogo
+        pathType: Prefix
+        backend:
+          service:
+            name: catalogo-libros
+            port:
+              number: 80

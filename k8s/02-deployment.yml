@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalogo-libros-deploy
+  labels:
+    app: catalogo-libros
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalogo-libros
+  template:
+    metadata:
+      labels:
+        app: catalogo-libros
+    spec:
+      containers:
+      - name: catalogo-container
+        image: localhost/mi-registro/biblioteca-app:v1
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "pruebas"
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:h2:file:/tmp/data/catalogo;IFEXISTS=FALSE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
+        volumeMounts:
+        - name: biblioteca-data
+          mountPath: /tmp/data
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 120
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 5
+      volumes:
+      - name: biblioteca-data
+        persistentVolumeClaim:
+          claimName: biblioteca-pvc
