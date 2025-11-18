@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: challenge-deployment
+  namespace: test
+  labels:
+    app: challenge-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: challenge-app
+  template:
+    metadata:
+      labels:
+        app: challenge-app
+    spec:
+      containers:
+      - name: challenge-app-container
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: challenge-app-storage
+          mountPath: /var/log/nginx
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "400m"
+        requests:
+          memory: "64Mi"
+          cpu: "150m"
+      volumes:
+        - name: challenge-app-storage
+          persistentVolumeClaim:
+            claimName: challenge-pvc
