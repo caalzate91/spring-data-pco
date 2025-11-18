@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: Servicio-nginx
+  labels:
+    app: nginx
+spec:
+  selector:
+    app: nginx
+  ports:
+    - protocol: TCP
+      port: 80        # Puerto expuesto por el Service
+      targetPort: 80  # Puerto del contenedor en el Deployment
+  type: ClusterIP

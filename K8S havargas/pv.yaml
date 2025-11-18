@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: Creacion_PV
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /data/nginx # Ruta en el nodo (para pruebas locales)
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nginx-PersistentVolumeClaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
