@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nginx-pv
+  labels:
+    app: nginx
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    # Ajusta esta ruta si tu nodo no permite /data; en Minikube/Kind funciona.
+    path: /data/nginx
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nginx-pvc
+  labels:
+    app: nginx
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: manual
+  volumeMode: Filesystem
+  selector:
+    matchLabels:
+      app: nginx
+  

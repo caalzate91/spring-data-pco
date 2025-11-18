@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+  labels:
+    app: nginx
+spec:
+  type: ClusterIP
+  selector:
+    app: nginx
+    tier: web
+  ports:
+    - name: http
+      port: 80        # Puerto para el Service dentro del cluster de Base de Datos 
+      targetPort: 80  # Puerto 80 de conexion para el contenedor 
