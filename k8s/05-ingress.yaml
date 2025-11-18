@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-banca-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: app-banca.local
+    http:
+      paths:
+      - path: /clientes
+        pathType: Prefix
+        backend:
+          service:
+            name: app-banca-service
+            port:
+              number: 80

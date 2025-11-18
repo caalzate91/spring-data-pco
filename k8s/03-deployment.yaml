@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-banca-deployment
+  labels:
+    app: app-banca
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: app-banca
+  template:
+    metadata:
+      labels:
+        app: app-banca
+    spec:
+      containers:
+      - name: app-banca-container
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+          name: http
+        volumeMounts:
+        - name: app-banca-storage
+          mountPath: /usr/share/nginx/html
+      resources:
+        limits:
+          memory: "512Mi"
+          cpu: "250m"
+        requests:
+          memory: "1Gi"
+          cpu: "500m"
+      volumes:
+      - name: app-banca-storage
+        persistentVolumeClaim:
+          claimName: app-banca-pvc
