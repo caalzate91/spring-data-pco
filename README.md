@@ -59,6 +59,18 @@ graph TB
 
 📋 **[Ver Diagrama Detallado de Componentes C4](docs/architecture/components.md)** - Análisis detallado de cada componente y sus interacciones
 
+## 📐 Architecture Decision Records (ADR)
+
+Las decisiones de arquitectura están documentadas con diagramas C4 en el directorio `.docs/adr/`:
+
+| ADR | Título | Diagramas C4 |
+|-----|--------|-------------|
+| [ADR-001](.docs/adr/ADR-001-arquitectura-por-capas.md) | Arquitectura por Capas | Contexto (L1), Contenedores (L2), Componentes (L3) |
+| [ADR-002](.docs/adr/ADR-002-autenticacion-jwt.md) | Autenticación Stateless con JWT | Componentes de Seguridad (L3), Secuencia |
+| [ADR-003](.docs/adr/ADR-003-base-de-datos-h2.md) | Base de Datos H2 File-based | Componentes de Persistencia (L3), ER |
+
+📂 **[Ver índice completo de ADRs](.docs/README.md)**
+
 ## 📋 Descripción de Capas
 
 ### Controllers (Capa de Presentación)

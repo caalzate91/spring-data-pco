@@ -27,7 +27,21 @@ This is a Spring Boot 3.4.1 banking proof-of-concept with a standard layered arc
 
 ### Domain Model
 - `Usuario` — system user with email (`correo`), name (`nombre`), BCrypt-hashed `password`, and a `Set<String> roles` stored in the `usuario_roles` join table.
-- `CuentaBancaria` — bank account with `numero` (unique), `saldo` (Double), `tipoCuenta`, and a `@ManyToOne` FK to `Usuario` (`idUsuario`).
+- `CuentaBancaria` — bank account with `numero` (unique), `saldo` (Double), `tipoCuenta`, and a `@ManyToOne` to `Usuario` (Java field named `usuario`, DB column `idUsuario`).
+
+### API Endpoints
+
+| Method | Path | Auth | Notes |
+|--------|------|------|-------|
+| POST | `/api/auth/register` | Public | `@RequestBody Usuario` — hashes password before saving |
+| POST | `/api/auth/login` | Public | `@RequestParam correo, password` — returns JWT string |
+| GET | `/api/usuarios` | Authenticated + ADMIN role | `@PreAuthorize("hasAuthority('ADMIN')")` |
+| GET | `/api/usuarios/{id}` | Authenticated | |
+| GET | `/api/cuentas` | Authenticated | |
+| GET | `/api/cuentas/{id}` | Authenticated | |
+| POST | `/api/cuentas` | Authenticated | |
+| PUT | `/api/cuentas/{id}` | Authenticated | |
+| DELETE | `/api/cuentas/{id}` | Authenticated | |
 
 ### Security
 - `SecurityConfig` disables CSRF, Basic auth, and form login.
@@ -35,12 +49,14 @@ This is a Spring Boot 3.4.1 banking proof-of-concept with a standard layered arc
 - All other endpoints require authentication (`.anyRequest().authenticated()`).
 - `JwtUtil` generates/validates HS512 JWT tokens using `jwt.secret` and `jwt.expiration` from `application.properties`.
 - **Note:** No JWT filter is currently registered in the `SecurityFilterChain` — token validation exists in `JwtUtil` but is not enforced by Spring Security.
-- `GET /api/usuarios` is role-guarded with `@PreAuthorize("hasAuthority('ADMIN')")`.
+- **Note:** `@EnableMethodSecurity` is absent from `SecurityConfig`, so `@PreAuthorize` on `GET /api/usuarios` is not currently enforced at runtime.
 
 ### Key Design Decisions
 - `AuthController` directly injects `UsuarioRepository` (bypasses `UsuarioService`) — intentional shortcut for auth flows.
+- Password hashing only happens in `AuthController.register()`. `UsuarioService.save()` does **not** hash — never call it with a plaintext password.
 - No DTOs: entity classes are used directly as request/response bodies.
 - Tests use `@SpringBootTest` (full context load against H2).
+- `UsuarioRepository` has one custom query method: `findByCorreo(String correo)`.
 
 ## Conventions
 
